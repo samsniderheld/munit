@@ -16,8 +16,8 @@ from Utils.util_functions import weights_init, get_scheduler, get_model_list
 # ######################################################
 version = torch.__version__
 version = tuple(int(n) for n in version.split('.')[:-1])
-#has_autocast = version >= (1, 6)
-has_autocast = False
+has_autocast = version >= (1, 6)
+#has_autocast = False
 # ######################################################
 
 class MUNIT_Trainer(nn.Module):
@@ -120,7 +120,7 @@ class MUNIT_Trainer(nn.Module):
 
     def gen_update(self, x_a, x_b, args):
         """forward and backward pass for the generator"""
-        if has_autocast:
+        if False:
             with torch.cuda.amp.autocast(enabled=True):
                 print('autocast working generator')
                 self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
