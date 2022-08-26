@@ -20,8 +20,8 @@ def train(gpu,args):
     # ######################################################
     version = torch.__version__
     args.version = tuple(int(n) for n in version.split('.')[:-1])
-    #args.has_autocast = version >= (1, 6)
-    args.has_autocast = False
+    args.has_autocast = version >= (1, 6)
+    #args.has_autocast = False
     # ######################################################
 
     #multiprocessing
@@ -62,8 +62,6 @@ def train(gpu,args):
 
     train_display_images_b = torch.stack([train_loader_b.dataset[i]
         for i in range(args.display_size)]).cuda(args.gpu)
-
-    print(train_display_images_a.shape)
 
     iterations = 0
 
