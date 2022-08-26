@@ -5,6 +5,14 @@ import time
 import re
 from torch.optim import lr_scheduler
 import torch.nn.init as init
+import torch.distributed as dist
+
+def should_distribute(world_size):
+    return dist.is_available() and world_size > 1
+
+
+def is_distributed():
+    return dist.is_available() and dist.is_initialized()
 
 
 def get_model_list(dirname, key):

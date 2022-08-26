@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from ..Training.training import is_distributed
+from Utils.util_functions import is_distributed
 
 from PIL import Image
 

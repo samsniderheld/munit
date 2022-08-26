@@ -7,20 +7,10 @@ import tensorboardX
 
 from Data_Utils.data_utils import *
 from Training.trainer import *
-from Utils.util_functions import Timer
+from Utils.util_functions import Timer, should_distribute
 from Utils.reporting import write_loss, write_to_images
 
 NODES      = int(os.environ.get('WORLD_SIZE', 1))
-
-
-
-
-def should_distribute(world_size):
-    return dist.is_available() and world_size > 1
-
-
-def is_distributed():
-    return dist.is_available() and dist.is_initialized()
 
 
 def train(gpu,args):
