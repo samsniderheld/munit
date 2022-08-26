@@ -79,6 +79,7 @@ class MUNIT_Trainer(nn.Module):
 
     def __aux_gen_update(self, x_a, x_b, args):
         """forward pass and loss estimation for the generator - function to allow fp16"""
+        self.generator_optimizer.zero_grad()
         style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
         style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
         # encode
@@ -121,7 +122,7 @@ class MUNIT_Trainer(nn.Module):
 
     def gen_update(self, x_a, x_b, args):
         """forward and backward pass for the generator"""
-        if False: #has_autocast:
+        if has_autocast:
             with torch.cuda.amp.autocast(enabled=True):
                 print('autocast working generator')
                 self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
@@ -129,7 +130,6 @@ class MUNIT_Trainer(nn.Module):
             self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
 
         print(self.loss_gen_total.dtype)
-        self.generator_optimizer.zero_grad()
         self.loss_gen_total.backward()
         self.generator_optimizer.step()
 
@@ -158,6 +158,7 @@ class MUNIT_Trainer(nn.Module):
 
     def __aux_dis_update(self, x_a, x_b, args):
         """forward pass and loss estimation for the generator - function to allow fp16"""
+        self.discrimator_optimizer.zero_grad()
         style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(args.gpu))
         style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(args.gpu))
         # encode
@@ -181,7 +182,6 @@ class MUNIT_Trainer(nn.Module):
         else:
             self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
         print(self.loss_dis_total.dtype)
-        self.discrimator_optimizer.zero_grad()
         self.loss_dis_total.backward()
         self.discrimator_optimizer.step()
 
