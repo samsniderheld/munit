@@ -16,8 +16,8 @@ from Utils.util_functions import weights_init, get_scheduler, get_model_list
 # ######################################################
 version = torch.__version__
 version = tuple(int(n) for n in version.split('.')[:-1])
-has_autocast = version >= (1, 6)
-#has_autocast = False
+#has_autocast = version >= (1, 6)
+has_autocast = False
 # ######################################################
 
 class MUNIT_Trainer(nn.Module):
