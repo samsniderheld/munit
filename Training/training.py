@@ -20,8 +20,8 @@ def train(gpu,args):
     # ######################################################
     version = torch.__version__
     args.version = tuple(int(n) for n in version.split('.')[:-1])
-    # args.has_autocast = version >= (1, 6)
-    args.has_autocast = False
+    args.has_autocast = version >= (1, 6)
+    #args.has_autocast = False
     # ######################################################
 
     #multiprocessing
@@ -53,7 +53,7 @@ def train(gpu,args):
     train_writer = tensorboardX.SummaryWriter(os.path.join(output_path + "/Loss", model_name))
 
     # Models to device and DDP setting
-    trainer.cuda(args.gpu) # Ver si conviene hacerlo después !!!
+    trainer.cuda(args.gpu) 
     if is_distributed():
         trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
     
