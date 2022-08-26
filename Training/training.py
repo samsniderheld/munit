@@ -58,10 +58,12 @@ def train(gpu,args):
         trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
     
     train_display_images_a = torch.stack([train_loader_a.dataset[i]
-        for i in range(args.display_size)])#.cuda(args.gpu)
+        for i in range(args.display_size)]).cuda(args.gpu)
 
     train_display_images_b = torch.stack([train_loader_b.dataset[i]
-        for i in range(args.display_size)])#.cuda(args.gpu)
+        for i in range(args.display_size)]).cuda(args.gpu)
+
+    print(train_display_images_a.shape)
 
     iterations = 0
 
