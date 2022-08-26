@@ -20,8 +20,8 @@ def train(gpu,args):
     # ######################################################
     version = torch.__version__
     args.version = tuple(int(n) for n in version.split('.')[:-1])
-    args.has_autocast = version >= (1, 6)
-    #args.has_autocast = False
+    #args.has_autocast = version >= (1, 6)
+    args.has_autocast = False
     # ######################################################
 
     #multiprocessing
