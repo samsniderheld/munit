@@ -16,14 +16,6 @@ NODES      = int(os.environ.get('WORLD_SIZE', 1))
 def train(gpu,args):
     """The main training loop, give args from munit.py"""
 
-    # Parse torch version for autocast
-    # ######################################################
-    version = torch.__version__
-    args.version = tuple(int(n) for n in version.split('.')[:-1])
-    args.has_autocast = version >= (1, 6)
-    #args.has_autocast = False
-    # ######################################################
-
     #multiprocessing
     args.gpu = gpu
 
@@ -74,18 +66,6 @@ def train(gpu,args):
             images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
 
             with Timer("Elapsed time in update: %f"):
-                # Main training code
-
-                # if args.has_autocast:
-                #     with torch.cuda.amp.autocast(enabled=True):
-                #         print('Autocast working!')
-                #         trainer.dis_update(images_a, images_b, args)
-                #         trainer.gen_update(images_a, images_b, args)
-                #         # torch.cuda.synchronize()
-                # else:
-                #     trainer.dis_update(images_a, images_b, args)
-                #     trainer.gen_update(images_a, images_b, args)
-                #     # torch.cuda.synchronize()
                 trainer.dis_update(images_a, images_b, args)
                 trainer.gen_update(images_a, images_b, args)
 

@@ -122,15 +122,12 @@ class MUNIT_Trainer(nn.Module):
 
     def gen_update(self, x_a, x_b, args):
         """forward and backward pass for the generator"""
-        if has_autocast:
+        if False: # has_autocast: # NEED TO CHECK: gen autocast is not working!  RuntimeError: Expected running_mean to have type Half but got Float
             with torch.cuda.amp.autocast(enabled=True):
-                print('autocast working generator')
                 self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
-                print(self.loss_gen_total.dtype)
         else:
             self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
 
-        print(self.loss_gen_total.dtype)
         self.loss_gen_total.backward()
         self.generator_optimizer.step()
 
@@ -178,12 +175,9 @@ class MUNIT_Trainer(nn.Module):
         """forward and backward pass for the discriminator"""
         if has_autocast:
             with torch.cuda.amp.autocast(enabled=True):
-                print('autocast working discriminator')
                 self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
-                print(self.loss_dis_total.dtype)
         else:
             self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
-        print(self.loss_dis_total.dtype)
         self.loss_dis_total.backward()
         self.discrimator_optimizer.step()
 
