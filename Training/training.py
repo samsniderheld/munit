@@ -38,7 +38,7 @@ def train(gpu,args):
     args.gpu = gpu
 
     # Device conf, GPU and distributed computing
-    torch.cuda.set_device(gpu)
+    torch.cuda.set_device(args.gpu)
 
     rank = args.nr * args.gpus + gpu
 
@@ -46,8 +46,6 @@ def train(gpu,args):
         dist.init_process_group(backend=args.backend, init_method='env://', world_size=args.world_size, rank=rank)
 
     trainer = MUNIT_Trainer(args)
-
-    trainer.cuda() # Ver!!!
 
     #setup data
     train_loader_a = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),
@@ -64,11 +62,16 @@ def train(gpu,args):
 
     train_writer = tensorboardX.SummaryWriter(os.path.join(output_path + "/Loss", model_name))
 
+    # Models to device and DDP setting
+    trainer.cuda(args.gpu) # Ver si conviene hacerlo después !!!
+    if is_distributed():
+        trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
+    
     train_display_images_a = torch.stack([train_loader_a.dataset[i]
-        for i in range(args.display_size)]).cuda()
+        for i in range(args.display_size)])#.cuda(args.gpu)
 
     train_display_images_b = torch.stack([train_loader_b.dataset[i]
-        for i in range(args.display_size)]).cuda()
+        for i in range(args.display_size)])#.cuda(args.gpu)
 
     iterations = 0
 
@@ -78,13 +81,14 @@ def train(gpu,args):
 
             trainer.update_learning_rate()
 
-            images_a, images_b = images_a.cuda().detach(), images_b.cuda().detach()
+            images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
 
             with Timer("Elapsed time in update: %f"):
                 # Main training code
 
                 if args.has_autocast:
                     with torch.cuda.amp.autocast(enabled=True):
+                        print('Autocast working!')
                         trainer.dis_update(images_a, images_b, args)
                         trainer.gen_update(images_a, images_b, args)
                         # torch.cuda.synchronize()

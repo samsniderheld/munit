@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--crop_size', type=int, default=256, help='The width of the image')
 
     parser.add_argument('--num_workers', type=int,
-        default=8, help='number of workers when data processing')
+        default=0, help='number of workers when data processing')
 
     #args for saving
     parser.add_argument('--print_freq', type=int,

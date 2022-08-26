@@ -29,8 +29,8 @@ class MUNIT_Trainer(nn.Module):
 
         # fix the noise used in sampling
         display_size = int(args.display_size)
-        self.style_vector_a = torch.randn(display_size, self.style_dim, 1, 1).cuda()
-        self.style_vector_b = torch.randn(display_size, self.style_dim, 1, 1).cuda()
+        self.style_vector_a = torch.randn(display_size, self.style_dim, 1, 1)#.cuda(args.gpu)
+        self.style_vector_b = torch.randn(display_size, self.style_dim, 1, 1)#.cuda(args.gpu)
 
         # Setup the optimizers
         beta1 = .5
@@ -69,8 +69,8 @@ class MUNIT_Trainer(nn.Module):
     def gen_update(self, x_a, x_b, args):
         """forward and backward pass for the generator"""
         self.generator_optimizer.zero_grad()
-        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
+        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
         # encode
         content_a, style_vector_a_prime = self.generator_a.encode(x_a)
         content_b,style_vector_b_prime = self.generator_b.encode(x_b)
@@ -114,8 +114,8 @@ class MUNIT_Trainer(nn.Module):
         self.eval()
         style_vector_a1 = Variable(self.style_vector_a)
         style_vector_b1 = Variable(self.style_vector_b)
-        style_vector_a2 = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b2 = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a2 = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
+        style_vector_b2 = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
         x_a_recon, x_b_recon, x_b_2_a1, x_b_2_a2, x_a_2_b1, x_a_2_b2 = [], [], [], [], [], []
         for i in range(x_a.size(0)):
             content_a, style_a_fake = self.generator_a.encode(x_a[i].unsqueeze(0))
@@ -135,8 +135,8 @@ class MUNIT_Trainer(nn.Module):
     def dis_update(self, x_a, x_b, args):
         """forward and backward pass for the discriminator"""
         self.discrimator_optimizer.zero_grad()
-        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
+        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1))#.cuda(args.gpu))
         # encode
         content_a, _ = self.generator_a.encode(x_a)
         content_b, _ = self.generator_b.encode(x_b)
