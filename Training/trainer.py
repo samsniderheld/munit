@@ -108,7 +108,7 @@ class MUNIT_Trainer(nn.Module):
         self.loss_generator_adv_b = self.discriminator_b.calc_gen_loss(x_a_2_b)
         
         # total loss
-        return args.gan_w * self.loss_generator_adv_a + \
+        loss_gen_total =  args.gan_w * self.loss_generator_adv_a + \
                               args.gan_w * self.loss_generator_adv_b + \
                               args.recon_x_w * self.loss_gen_recon_x_a + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_a + \
@@ -116,6 +116,8 @@ class MUNIT_Trainer(nn.Module):
                               args.recon_x_w * self.loss_gen_recon_x_b + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_b + \
                               args.recon_c_w * self.loss_gen_recon_content_b
+        
+        return loss_gen_total
 
 
     def gen_update(self, x_a, x_b, args):
@@ -127,6 +129,7 @@ class MUNIT_Trainer(nn.Module):
         else:
             self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
 
+        self.loss_gen_total.dtype
         self.loss_gen_total.backward()
         self.generator_optimizer.step()
 
@@ -178,6 +181,7 @@ class MUNIT_Trainer(nn.Module):
                 self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
         else:
             self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
+        self.loss_dis_total.dtype
         self.loss_dis_total.backward()
         self.discrimator_optimizer.step()
 
