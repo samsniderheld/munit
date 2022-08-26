@@ -121,7 +121,7 @@ class MUNIT_Trainer(nn.Module):
 
     def gen_update(self, x_a, x_b, args):
         """forward and backward pass for the generator"""
-        if has_autocast:
+        if False: #has_autocast:
             with torch.cuda.amp.autocast(enabled=True):
                 print('autocast working generator')
                 self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
