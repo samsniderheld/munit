@@ -122,6 +122,7 @@ class MUNIT_Trainer(nn.Module):
         """forward and backward pass for the generator"""
         if args.has_autocast:
             with torch.cuda.amp.autocast(enabled=True):
+                print('autocast working discriminator')
                 self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
         else:
             self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
@@ -173,6 +174,7 @@ class MUNIT_Trainer(nn.Module):
         """forward and backward pass for the discriminator"""
         if args.has_autocast:
             with torch.cuda.amp.autocast(enabled=True):
+                print('autocast working discriminator')
                 self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
         else:
             self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
