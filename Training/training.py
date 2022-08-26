@@ -76,16 +76,18 @@ def train(gpu,args):
             with Timer("Elapsed time in update: %f"):
                 # Main training code
 
-                if args.has_autocast:
-                    with torch.cuda.amp.autocast(enabled=True):
-                        print('Autocast working!')
-                        trainer.dis_update(images_a, images_b, args)
-                        trainer.gen_update(images_a, images_b, args)
-                        # torch.cuda.synchronize()
-                else:
-                    trainer.dis_update(images_a, images_b, args)
-                    trainer.gen_update(images_a, images_b, args)
-                    # torch.cuda.synchronize()
+                # if args.has_autocast:
+                #     with torch.cuda.amp.autocast(enabled=True):
+                #         print('Autocast working!')
+                #         trainer.dis_update(images_a, images_b, args)
+                #         trainer.gen_update(images_a, images_b, args)
+                #         # torch.cuda.synchronize()
+                # else:
+                #     trainer.dis_update(images_a, images_b, args)
+                #     trainer.gen_update(images_a, images_b, args)
+                #     # torch.cuda.synchronize()
+                trainer.dis_update(images_a, images_b, args)
+                trainer.gen_update(images_a, images_b, args)
 
             # Dump training stats in log file
             if (iterations + 1) % args.print_freq == 0:

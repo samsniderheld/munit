@@ -12,6 +12,14 @@ from Model.ms_img_disc import MsImageDis
 
 from Utils.util_functions import weights_init, get_scheduler, get_model_list
 
+# Parse torch version for autocast
+# ######################################################
+version = torch.__version__
+version = tuple(int(n) for n in version.split('.')[:-1])
+has_autocast = version >= (1, 6)
+#has_autocast = False
+# ######################################################
+
 class MUNIT_Trainer(nn.Module):
     """See above"""
     def __init__(self, args):
@@ -68,8 +76,9 @@ class MUNIT_Trainer(nn.Module):
         self.train()
         return x_a_2_b, x_b_2_a
 
-    def gen_update(self, x_a, x_b, args):
-        """forward and backward pass for the generator"""
+
+    def __aux_gen_update(self, x_a, x_b, args):
+        """forward pass and loss estimation for the generator - function to allow fp16"""
         self.generator_optimizer.zero_grad()
         style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
         style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
@@ -99,7 +108,7 @@ class MUNIT_Trainer(nn.Module):
         self.loss_generator_adv_b = self.discriminator_b.calc_gen_loss(x_a_2_b)
         
         # total loss
-        self.loss_gen_total = args.gan_w * self.loss_generator_adv_a + \
+        return args.gan_w * self.loss_generator_adv_a + \
                               args.gan_w * self.loss_generator_adv_b + \
                               args.recon_x_w * self.loss_gen_recon_x_a + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_a + \
@@ -107,6 +116,15 @@ class MUNIT_Trainer(nn.Module):
                               args.recon_x_w * self.loss_gen_recon_x_b + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_b + \
                               args.recon_c_w * self.loss_gen_recon_content_b
+
+
+    def gen_update(self, x_a, x_b, args):
+        """forward and backward pass for the generator"""
+        if args.has_autocast:
+            with torch.cuda.amp.autocast(enabled=True):
+                self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
+        else:
+            self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
 
         self.loss_gen_total.backward()
         self.generator_optimizer.step()
@@ -134,8 +152,8 @@ class MUNIT_Trainer(nn.Module):
         self.train()
         return x_a, x_a_recon, x_a_2_b1, x_a_2_b2, x_b, x_b_recon, x_b_2_a1, x_b_2_a2
 
-    def dis_update(self, x_a, x_b, args):
-        """forward and backward pass for the discriminator"""
+    def __aux_dis_update(self, x_a, x_b, args):
+        """forward pass and loss estimation for the generator - function to allow fp16"""
         self.discrimator_optimizer.zero_grad()
         style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(args.gpu))
         style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(args.gpu))
@@ -148,7 +166,16 @@ class MUNIT_Trainer(nn.Module):
         # D loss
         self.loss_dicrimininator_a = self.dicrimininator_a.calc_dis_loss(x_b_2_a.detach(), x_a)
         self.loss_discriminator_b = self.discriminator_b.calc_dis_loss(x_a_2_b.detach(), x_b)
-        self.loss_dis_total = args.gan_w * self.loss_dicrimininator_a + args.gan_w * self.loss_discriminator_b
+        
+        return args.gan_w * self.loss_dicrimininator_a + args.gan_w * self.loss_discriminator_b
+
+    def dis_update(self, x_a, x_b, args):
+        """forward and backward pass for the discriminator"""
+        if args.has_autocast:
+            with torch.cuda.amp.autocast(enabled=True):
+                self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
+        else:
+            self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
         self.loss_dis_total.backward()
         self.discrimator_optimizer.step()
 
