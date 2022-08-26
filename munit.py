@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument('--mlp_dims', type=int,
         default=256, help='Num of filters in mlp')
     parser.add_argument('--num_down_sample_layers', type=int,
-        default=2, help='The number of epochs')
+        default=2, help='The number of down sample layersß')
     parser.add_argument('--num_res_blocks', type=int,
         default=4, help='The number of residual blocks')
 
