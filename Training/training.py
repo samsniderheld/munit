@@ -47,7 +47,7 @@ def train(gpu,args):
 
     trainer = MUNIT_Trainer(args)
 
-    trainer.cuda()
+    trainer.cuda() # Ver!!!
 
     #setup data
     train_loader_a = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),

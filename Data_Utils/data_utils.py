@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-
+from Training.training import is_distributed
 
 from PIL import Image
 
@@ -66,7 +66,7 @@ class ImageFolder(data.Dataset):
         return len(self.imgs)
 
 def get_data_loader_folder(args,input_folder, batch_size, train,  new_size=None,
-                           height=256, width=256, num_workers=4, crop=True, world_size=1, rank=1 ):
+                           height=256, width=256, num_workers=0, crop=True, world_size=1, rank=1 ):
     """open folder, import images and apply data transforms"""
     transform_list = [transforms.ToTensor(),
                       transforms.Normalize((0.5, 0.5, 0.5),
@@ -80,7 +80,7 @@ def get_data_loader_folder(args,input_folder, batch_size, train,  new_size=None,
 
     if(args.gpus>1):
 
-        sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, drop_last=False)
+        sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, drop_last=False) if is_distributed() else None
 
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=False,
             drop_last=True, num_workers=num_workers, pin_memory=True, sampler=sampler)
