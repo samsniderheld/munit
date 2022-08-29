@@ -3,6 +3,7 @@ import os
 import os.path
 import torch.utils.data as data
 import torchvision.transforms as transforms
+from torch import nn
 
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -36,6 +37,10 @@ def make_dataset(dir):
                 images.append(path)
 
     return images
+
+def isDDP(model):
+    return isinstance(model, nn.parallel.DistributedDataParallel)
+
 
 class ImageFolder(data.Dataset):
     """Simple class for representing all files in an image folder"""
@@ -75,7 +80,6 @@ def get_data_loader_folder(args,input_folder, batch_size, train,  new_size=None,
     transform_list = [transforms.Resize(new_size)] + transform_list if new_size is not None else transform_list
     transform_list = [transforms.RandomHorizontalFlip()] + transform_list if train else transform_list
     transform = transforms.Compose(transform_list)
-
     dataset = ImageFolder(input_folder, transform=transform)
 
     if(args.gpus>1):

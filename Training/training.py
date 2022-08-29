@@ -64,12 +64,8 @@ def train(gpu,args):
             images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
             
             with Timer("Elapsed time in update: %f"):
-                if isinstance(trainer, nn.parallel.DistributedDataParallel):
-                    trainer.module.dis_update(images_a, images_b, args)
-                    trainer.module.gen_update(images_a, images_b, args)
-                else:
-                    trainer.dis_update(images_a, images_b, args)
-                    trainer.gen_update(images_a, images_b, args)
+                trainer.module.dis_update(images_a, images_b, args) if isDDP(trainer) else trainer.dis_update(images_a, images_b, args)
+                trainer.module.gen_update(images_a, images_b, args) if isDDP(trainer) else trainer.gen_update(images_a, images_b, args)
 
             # Dump training stats in log file
             if (iterations + 1) % args.print_freq == 0:
@@ -80,20 +76,16 @@ def train(gpu,args):
             if (iterations + 1) % args.print_freq == 0:
 
                 with torch.no_grad():
-                    train_image_outputs = trainer.sample(train_display_images_a,
-                        train_display_images_b)
+                    train_image_outputs = trainer.module.sample(train_display_images_a,train_display_images_b) if isDDP(trainer) else trainer.sample(train_display_images_a,train_display_images_b)
 
                 write_to_images(train_image_outputs, args.display_size,
                     args.image_results_dir, f'train_{(iterations+1)}')
 
             # Save network weights
             if (iterations + 1) % args.save_freq == 0:
-                trainer.save(args.saved_model_dir, iterations)
+                trainer.module.save(args.saved_model_dir, iterations) if isDDP(trainer) else trainer.save(args.saved_model_dir, iterations)
 
-            if isinstance(trainer, nn.parallel.DistributedDataParallel):
-                trainer.module.update_learning_rate()    
-            else:
-                trainer.update_learning_rate()
+            trainer.module.update_learning_rate() if isDDP(trainer) else trainer.update_learning_rate()
 
             iterations += 1
            
