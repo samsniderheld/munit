@@ -48,6 +48,7 @@ def train(gpu,args):
     # Models to device and DDP setting
     trainer.cuda(args.gpu) 
     if is_distributed():
+        print('nn_parallel!')
         trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
     
     train_display_images_a = torch.stack([train_loader_a.dataset[i]
@@ -88,7 +89,7 @@ def train(gpu,args):
                 trainer.save(args.saved_model_dir, iterations)
 
             trainer.update_learning_rate()
-            
+
             iterations += 1
            
             if iterations >= args.max_iter:
