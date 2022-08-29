@@ -92,7 +92,10 @@ def train(gpu,args):
             if (iterations + 1) % args.save_freq == 0:
                 trainer.save(args.saved_model_dir, iterations)
 
-            trainer.update_learning_rate()
+            if isinstance(trainer, nn.parallel.DistributedDataParallel):
+                trainer.module.update_learning_rate()    
+            else:
+                trainer.update_learning_rate()
 
             iterations += 1
            
