@@ -62,8 +62,6 @@ def train(gpu,args):
 
         for  (images_a, images_b) in zip(train_loader_a, train_loader_b):
 
-            trainer.update_learning_rate()
-
             images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
             
             with Timer("Elapsed time in update: %f"):
@@ -89,6 +87,8 @@ def train(gpu,args):
             if (iterations + 1) % args.save_freq == 0:
                 trainer.save(args.saved_model_dir, iterations)
 
+            trainer.update_learning_rate()
+            
             iterations += 1
            
             if iterations >= args.max_iter:
