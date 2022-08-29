@@ -25,6 +25,7 @@ def train(gpu,args):
     rank = args.nr * args.gpus + gpu
 
     if should_distribute(args.world_size):
+        print('Should distribute!')
         dist.init_process_group(backend=args.backend, init_method='env://', world_size=args.world_size, rank=rank)
 
     trainer = MUNIT_Trainer(args)
@@ -64,7 +65,7 @@ def train(gpu,args):
             trainer.update_learning_rate()
 
             images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
-            print(images_a.shape, images_b.shape)
+            
             with Timer("Elapsed time in update: %f"):
                 trainer.dis_update(images_a, images_b, args)
                 trainer.gen_update(images_a, images_b, args)
