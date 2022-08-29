@@ -25,7 +25,6 @@ def train(gpu,args):
     rank = args.nr * args.gpus + gpu
 
     if should_distribute(args.world_size):
-        print('Should distribute!')
         dist.init_process_group(backend=args.backend, init_method='env://', world_size=args.world_size, rank=rank)
 
     trainer = MUNIT_Trainer(args)
@@ -48,7 +47,6 @@ def train(gpu,args):
     # Models to device and DDP setting
     trainer = trainer.cuda(args.gpu) 
     if is_distributed():
-        print('nn_parallel!')
         trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
     
     train_display_images_a = torch.stack([train_loader_a.dataset[i]
