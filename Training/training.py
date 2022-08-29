@@ -49,11 +49,11 @@ def train(gpu,args):
     if is_distributed():
         trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
     
-    train_display_images_a = torch.stack([train_loader_a.dataset[i]
-        for i in range(args.display_size)]).cuda(args.gpu)
-    print(train_display_images_a.shape)
-    train_display_images_b = torch.stack([train_loader_b.dataset[i]
-        for i in range(args.display_size)]).cuda(args.gpu)
+    # train_display_images_a = torch.stack([train_loader_a.dataset[i]
+    #     for i in range(args.display_size)]).cuda(args.gpu)
+    
+    # train_display_images_b = torch.stack([train_loader_b.dataset[i]
+    #     for i in range(args.display_size)]).cuda(args.gpu)
 
     iterations = 0
 
@@ -75,14 +75,14 @@ def train(gpu,args):
                 write_loss(iterations, trainer, train_writer)
 
             # Write images
-            if (iterations + 1) % args.print_freq == 0:
+            # if (iterations + 1) % args.print_freq == 0:
 
-                with torch.no_grad():
-                    train_image_outputs = trainer.sample(train_display_images_a,
-                        train_display_images_b)
+                # with torch.no_grad():
+                #     train_image_outputs = trainer.sample(train_display_images_a,
+                #         train_display_images_b)
 
-                write_to_images(train_image_outputs, args.display_size,
-                    args.image_results_dir, f'train_{(iterations+1)}')
+                # write_to_images(train_image_outputs, args.display_size,
+                #     args.image_results_dir, f'train_{(iterations+1)}')
 
             # Save network weights
             if (iterations + 1) % args.save_freq == 0:
