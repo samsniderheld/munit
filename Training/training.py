@@ -22,6 +22,11 @@ def train(gpu,args):
     # Device conf, GPU and distributed computing
     torch.cuda.set_device(args.gpu)
 
+    # A100 fixing
+    if torch.cuda.get_device_capability(args.gpu) == (8,0): ## A100 fix thanks to Emad
+        print('Disabling CUDNN for A100 gpu', file=sys.stderr)
+        torch.backends.cudnn.enabled = False
+
     rank = args.nr * args.gpus + gpu
 
     if should_distribute(args.world_size):
