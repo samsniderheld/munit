@@ -104,7 +104,11 @@ def main():
 
     args = parse_args()
 
-    args.experiment_name = datetime.now().strftime("%Y_%m_%d_%H_%M") + "_" + args.experiment_name
+    # Resume training and experiment name
+    if (args.resume_training):
+        args.experiment_name = args.experiment_name
+    else:
+        args.experiment_name = datetime.now().strftime("%Y_%m_%d_%H_%M") + "_" + args.experiment_name
 
     args.base_results_dir = os.path.join(args.output_dir,args.experiment_name)
 
