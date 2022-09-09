@@ -58,7 +58,7 @@ def train(gpu,args):
     iterations = 0
     # recover from checkpoint
     if(args.continue_training and os.path.exists(args.saved_model_dir)):
-        trainer.module.resume(args.saved_model_dir, args) if isDDP(trainer) else trainer.resume(args.saved_model_dir, args)
+        iterations = trainer.module.resume(args.saved_model_dir, args) if isDDP(trainer) else trainer.resume(args.saved_model_dir, args)
 
     while True:
 
