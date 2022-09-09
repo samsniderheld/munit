@@ -18,6 +18,9 @@ def parse_args():
     #input and output args
     parser = argparse.ArgumentParser(description=desc)
 
+    parser.add_argument('--base_data_dir', type=str,
+        default="Data/", help='The directory that holds the image data')
+
     parser.add_argument('--input_data_dir', type=str,
         default="train_A/", help='The directory for input data')
 
