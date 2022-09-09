@@ -105,7 +105,7 @@ def main():
     args = parse_args()
 
     # Resume training and experiment name
-    if (args.resume_training):
+    if (args.continue_training):
         args.experiment_name = args.experiment_name
     else:
         args.experiment_name = datetime.now().strftime("%Y_%m_%d_%H_%M") + "_" + args.experiment_name
