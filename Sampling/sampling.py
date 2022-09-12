@@ -10,7 +10,7 @@ from Training.trainer import *
 def sample_images(args):
     
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    args.gpu = 0
     trainer = MUNIT_Trainer(args)
     trainer.load_pretrained_gen(args.saved_model_dir)
     trainer.to(args.device)

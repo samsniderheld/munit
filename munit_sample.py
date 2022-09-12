@@ -23,10 +23,10 @@ def parse_args():
         default="Data/", help='The directory that holds the image data')
 
     parser.add_argument('--input_data_dir', type=str,
-        default="train_A/", help='The directory for input data')
+        default="test_A/", help='The directory for input data')
 
     parser.add_argument('--style_data_dir', type=str,
-        default="train_B/", help='The directory for the style data')
+        default="test_B/", help='The directory for the style data')
 
     parser.add_argument("--output_dir", type=str,
         default="base_results_dir/", help="The directory for all the output results.")
@@ -95,11 +95,12 @@ def main():
     args.experiment_name = args.experiment_name
     
     args.base_results_dir = os.path.join(args.output_dir,args.experiment_name)
+    args.output_images_path = os.path.join(args.base_results_dir, args.output_images_path, args.output_images_subfolder_path)
 
     # Output path dir
     print('creating directories in ' + args.base_results_dir)
     os.makedirs(args.base_results_dir, exist_ok=True)
-    os.makedirs(os.path.join(args.base_results_dir, args.output_images_path, args.output_images_subfolder_path), exist_ok=True)
+    os.makedirs(os.path.join(args.output_images_path), exist_ok=True)
 
     args.saved_model_dir = os.path.join(args.base_results_dir,"Saved_Models")
 
