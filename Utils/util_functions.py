@@ -40,6 +40,11 @@ def weights_init(init_type='gaussian'):
 
 def get_scheduler(optimizer,args, iterations=-1):
     """create a pytorch scheduler"""
+    try:
+        args.lr_policy_step_size
+    except NameError:
+        args.lr_policy_step_size = 100      
+
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.lr_policy_step_size,
                                         gamma=.5, last_epoch=iterations)
     return scheduler
