@@ -220,3 +220,11 @@ class MUNIT_Trainer(nn.Module):
         torch.save({'a': self.generator_a.state_dict(), 'b': self.generator_b.state_dict()}, gen_name)
         torch.save({'a': self.dicrimininator_a.state_dict(), 'b': self.discriminator_b.state_dict()}, dis_name)
         torch.save({'gen': self.generator_optimizer.state_dict(), 'dis': self.discrimator_optimizer.state_dict()}, opt_name)
+
+    def load_pretrained_gen(self, checkpoint_dir):
+        """function to resume training"""
+        # Load generators
+        last_model_name = get_model_list(checkpoint_dir, "gen")
+        state_dict = torch.load(last_model_name)
+        self.generator_a.load_state_dict(state_dict['a'])
+        self.generator_b.load_state_dict(state_dict['b'])

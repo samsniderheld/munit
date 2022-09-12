@@ -8,6 +8,7 @@ from datetime import datetime
 from Training.training import train
 import torch.distributed as dist
 import torch.multiprocessing as mp
+from Sampling.sampling import sample_images
 
 
 
@@ -104,7 +105,7 @@ def main():
 
     print('Recovering model from ' + args.saved_model_dir)
     
-    #sample_images(args) 
+    sample_images(args) 
 
 
     # print("done training")
