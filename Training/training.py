@@ -7,38 +7,20 @@ import tensorboardX
 
 from Data_Utils.data_utils import *
 from Training.trainer import *
-from Utils.util_functions import Timer
+from Utils.util_functions import Timer, should_distribute
 from Utils.reporting import write_loss, write_to_images
 
 NODES      = int(os.environ.get('WORLD_SIZE', 1))
 
 
-
-
-def should_distribute(world_size):
-    return dist.is_available() and world_size > 1
-
-
-def is_distributed():
-    return dist.is_available() and dist.is_initialized()
-
-
 def train(gpu,args):
     """The main training loop, give args from munit.py"""
-
-    # Parse torch version for autocast
-    # ######################################################
-    version = torch.__version__
-    args.version = tuple(int(n) for n in version.split('.')[:-1])
-    # args.has_autocast = version >= (1, 6)
-    args.has_autocast = False
-    # ######################################################
 
     #multiprocessing
     args.gpu = gpu
 
     # Device conf, GPU and distributed computing
-    torch.cuda.set_device(gpu)
+    torch.cuda.set_device(args.gpu)
 
     rank = args.nr * args.gpus + gpu
 
@@ -46,8 +28,6 @@ def train(gpu,args):
         dist.init_process_group(backend=args.backend, init_method='env://', world_size=args.world_size, rank=rank)
 
     trainer = MUNIT_Trainer(args)
-
-    trainer.cuda()
 
     #setup data
     train_loader_a = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),
@@ -64,34 +44,31 @@ def train(gpu,args):
 
     train_writer = tensorboardX.SummaryWriter(os.path.join(output_path + "/Loss", model_name))
 
+    # Models to device and DDP setting
+    trainer = trainer.cuda(args.gpu) 
+    if is_distributed():
+        trainer = nn.parallel.DistributedDataParallel(trainer, device_ids=[args.gpu])
+    
     train_display_images_a = torch.stack([train_loader_a.dataset[i]
-        for i in range(args.display_size)]).cuda()
-
+        for i in range(args.display_size)]).cuda(args.gpu)
+    
     train_display_images_b = torch.stack([train_loader_b.dataset[i]
-        for i in range(args.display_size)]).cuda()
+        for i in range(args.display_size)]).cuda(args.gpu)
 
     iterations = 0
+    # recover from checkpoint
+    if(args.continue_training and os.path.exists(args.saved_model_dir)):
+        iterations = trainer.module.resume(args.saved_model_dir, args) if isDDP(trainer) else trainer.resume(args.saved_model_dir, args)
 
     while True:
 
         for  (images_a, images_b) in zip(train_loader_a, train_loader_b):
 
-            trainer.update_learning_rate()
-
-            images_a, images_b = images_a.cuda().detach(), images_b.cuda().detach()
-
+            images_a, images_b = images_a.cuda(args.gpu).detach(), images_b.cuda(args.gpu).detach()
+            
             with Timer("Elapsed time in update: %f"):
-                # Main training code
-
-                if args.has_autocast:
-                    with torch.cuda.amp.autocast(enabled=True):
-                        trainer.dis_update(images_a, images_b, args)
-                        trainer.gen_update(images_a, images_b, args)
-                        # torch.cuda.synchronize()
-                else:
-                    trainer.dis_update(images_a, images_b, args)
-                    trainer.gen_update(images_a, images_b, args)
-                    # torch.cuda.synchronize()
+                trainer.module.dis_update(images_a, images_b, args) if isDDP(trainer) else trainer.dis_update(images_a, images_b, args)
+                trainer.module.gen_update(images_a, images_b, args) if isDDP(trainer) else trainer.gen_update(images_a, images_b, args)
 
             # Dump training stats in log file
             if (iterations + 1) % args.print_freq == 0:
@@ -102,15 +79,16 @@ def train(gpu,args):
             if (iterations + 1) % args.print_freq == 0:
 
                 with torch.no_grad():
-                    train_image_outputs = trainer.sample(train_display_images_a,
-                        train_display_images_b)
+                    train_image_outputs = trainer.module.sample(train_display_images_a,train_display_images_b) if isDDP(trainer) else trainer.sample(train_display_images_a,train_display_images_b)
 
                 write_to_images(train_image_outputs, args.display_size,
                     args.image_results_dir, f'train_{(iterations+1)}')
 
             # Save network weights
             if (iterations + 1) % args.save_freq == 0:
-                trainer.save(args.saved_model_dir, iterations)
+                trainer.module.save(args.saved_model_dir, iterations) if isDDP(trainer) else trainer.save(args.saved_model_dir, iterations)
+
+            trainer.module.update_learning_rate() if isDDP(trainer) else trainer.update_learning_rate()
 
             iterations += 1
            

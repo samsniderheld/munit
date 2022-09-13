@@ -12,11 +12,21 @@ from Model.ms_img_disc import MsImageDis
 
 from Utils.util_functions import weights_init, get_scheduler, get_model_list
 
+# Parse torch version for autocast
+# ######################################################
+version = torch.__version__
+version = tuple(int(n) for n in version.split('.')[:-1])
+has_autocast = version >= (1, 6)
+#has_autocast = False
+# ######################################################
+
 class MUNIT_Trainer(nn.Module):
     """See above"""
     def __init__(self, args):
         super(MUNIT_Trainer, self).__init__()
 
+        self.args = args
+        
         lr = 0.0001
 
         # Initiate the networks
@@ -29,8 +39,8 @@ class MUNIT_Trainer(nn.Module):
 
         # fix the noise used in sampling
         display_size = int(args.display_size)
-        self.style_vector_a = torch.randn(display_size, self.style_dim, 1, 1).cuda()
-        self.style_vector_b = torch.randn(display_size, self.style_dim, 1, 1).cuda()
+        self.style_vector_a = torch.randn(display_size, self.style_dim, 1, 1).cuda(self.args.gpu)
+        self.style_vector_b = torch.randn(display_size, self.style_dim, 1, 1).cuda(self.args.gpu)
 
         # Setup the optimizers
         beta1 = .5
@@ -66,11 +76,12 @@ class MUNIT_Trainer(nn.Module):
         self.train()
         return x_a_2_b, x_b_2_a
 
-    def gen_update(self, x_a, x_b, args):
-        """forward and backward pass for the generator"""
+
+    def __aux_gen_update(self, x_a, x_b, args):
+        """forward pass and loss estimation for the generator - function to allow fp16"""
         self.generator_optimizer.zero_grad()
-        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
+        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
         # encode
         content_a, style_vector_a_prime = self.generator_a.encode(x_a)
         content_b,style_vector_b_prime = self.generator_b.encode(x_b)
@@ -97,7 +108,7 @@ class MUNIT_Trainer(nn.Module):
         self.loss_generator_adv_b = self.discriminator_b.calc_gen_loss(x_a_2_b)
         
         # total loss
-        self.loss_gen_total = args.gan_w * self.loss_generator_adv_a + \
+        loss_gen_total =  args.gan_w * self.loss_generator_adv_a + \
                               args.gan_w * self.loss_generator_adv_b + \
                               args.recon_x_w * self.loss_gen_recon_x_a + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_a + \
@@ -105,6 +116,17 @@ class MUNIT_Trainer(nn.Module):
                               args.recon_x_w * self.loss_gen_recon_x_b + \
                               args.recon_s_w * self.loss_gen_recon_style_vector_b + \
                               args.recon_c_w * self.loss_gen_recon_content_b
+        
+        return loss_gen_total
+
+
+    def gen_update(self, x_a, x_b, args):
+        """forward and backward pass for the generator"""
+        if False: # has_autocast: # NEED TO CHECK: gen autocast is not working!  RuntimeError: Expected running_mean to have type Half but got Float
+            with torch.cuda.amp.autocast(enabled=True):
+                self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
+        else:
+            self.loss_gen_total = self.__aux_gen_update(x_a, x_b, args)
 
         self.loss_gen_total.backward()
         self.generator_optimizer.step()
@@ -114,8 +136,8 @@ class MUNIT_Trainer(nn.Module):
         self.eval()
         style_vector_a1 = Variable(self.style_vector_a)
         style_vector_b1 = Variable(self.style_vector_b)
-        style_vector_a2 = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b2 = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a2 = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
+        style_vector_b2 = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(self.args.gpu))
         x_a_recon, x_b_recon, x_b_2_a1, x_b_2_a2, x_a_2_b1, x_a_2_b2 = [], [], [], [], [], []
         for i in range(x_a.size(0)):
             content_a, style_a_fake = self.generator_a.encode(x_a[i].unsqueeze(0))
@@ -132,11 +154,11 @@ class MUNIT_Trainer(nn.Module):
         self.train()
         return x_a, x_a_recon, x_a_2_b1, x_a_2_b2, x_b, x_b_recon, x_b_2_a1, x_b_2_a2
 
-    def dis_update(self, x_a, x_b, args):
-        """forward and backward pass for the discriminator"""
+    def __aux_dis_update(self, x_a, x_b, args):
+        """forward pass and loss estimation for the generator - function to allow fp16"""
         self.discrimator_optimizer.zero_grad()
-        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda())
-        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda())
+        style_vector_a = Variable(torch.randn(x_a.size(0), self.style_dim, 1, 1).cuda(args.gpu))
+        style_vector_b = Variable(torch.randn(x_b.size(0), self.style_dim, 1, 1).cuda(args.gpu))
         # encode
         content_a, _ = self.generator_a.encode(x_a)
         content_b, _ = self.generator_b.encode(x_b)
@@ -146,7 +168,16 @@ class MUNIT_Trainer(nn.Module):
         # D loss
         self.loss_dicrimininator_a = self.dicrimininator_a.calc_dis_loss(x_b_2_a.detach(), x_a)
         self.loss_discriminator_b = self.discriminator_b.calc_dis_loss(x_a_2_b.detach(), x_b)
-        self.loss_dis_total = args.gan_w * self.loss_dicrimininator_a + args.gan_w * self.loss_discriminator_b
+        
+        return args.gan_w * self.loss_dicrimininator_a + args.gan_w * self.loss_discriminator_b
+
+    def dis_update(self, x_a, x_b, args):
+        """forward and backward pass for the discriminator"""
+        if has_autocast:
+            with torch.cuda.amp.autocast(enabled=True):
+                self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
+        else:
+            self.loss_dis_total = self.__aux_dis_update(x_a, x_b, args)
         self.loss_dis_total.backward()
         self.discrimator_optimizer.step()
 
@@ -189,3 +220,11 @@ class MUNIT_Trainer(nn.Module):
         torch.save({'a': self.generator_a.state_dict(), 'b': self.generator_b.state_dict()}, gen_name)
         torch.save({'a': self.dicrimininator_a.state_dict(), 'b': self.discriminator_b.state_dict()}, dis_name)
         torch.save({'gen': self.generator_optimizer.state_dict(), 'dis': self.discrimator_optimizer.state_dict()}, opt_name)
+
+    def load_pretrained_gen(self, checkpoint_dir):
+        """function to resume training"""
+        # Load generators
+        last_model_name = get_model_list(checkpoint_dir, "gen")
+        state_dict = torch.load(last_model_name)
+        self.generator_a.load_state_dict(state_dict['a'])
+        self.generator_b.load_state_dict(state_dict['b'])
