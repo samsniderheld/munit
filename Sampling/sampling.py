@@ -30,9 +30,6 @@ def sample_images(args):
     style_encode = trainer.generator_b.encode  # style encode function
     style_dim = trainer.style_dim
 
-    # Model and output paths
-    args.output_dir = os.path.join(args.output_dir, args.output_images_path, args.output_images_subfolder_path)
-
     # style
     s = torch.randn(1, style_dim, 1, 1).to(args.device)
     transform = transforms.Compose([transforms.Resize(1024),
@@ -54,7 +51,7 @@ def sample_images(args):
         content, _ = encode(images) 
         outputs = decode(content, style)
         outputs = (outputs + 1) / 2.
-        path = os.path.join(args.output_dir, 'output{:09d}.{}'.format(i,"png"))
+        path = os.path.join(args.output_images_path, 'output{:09d}.{}'.format(i,"png"))
         vutils.save_image(outputs.data, path, padding=0, normalize=True)
         del images
         del content
