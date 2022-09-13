@@ -17,6 +17,9 @@ def sample_images(args):
     data_loader = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),
         args.batch_size, False, args.img_width, args.crop_size, args.crop_size)
     image_names = ImageFolder(os.path.join(args.base_data_dir, args.input_data_dir), transform=None, return_paths=True)
+    data_loader = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),
+        args.batch_size, False, args.img_width, args.crop_size,
+        args.crop_size, 8, True, 1, 1 )
 
     # load model
     print("loading model")
@@ -36,7 +39,6 @@ def sample_images(args):
                                 transforms.ToTensor(),
                                 # transforms.GaussianBlur(kernel_size=(9, 9), sigma=(5.0, 5.0)),
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    
     
     if args.style_img != '':
         style_image = Variable(transform(Image.open(args.style_img).convert('RGB')).unsqueeze(0).cuda()) 
