@@ -14,7 +14,7 @@ import os
 import torch.distributed as dist
 
 from Data_Utils.data_utils import *
-from Sampling import sample_images
+from Sampling.sampling import sample_images
 from Training.trainer import *
 
 from tqdm import tqdm
