@@ -10,7 +10,7 @@ from Training.trainer import *
 def sample_images(args):
     
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    args.gpu = 0
+    args.gpus, args.gpu = 0
 
     #setup data
     print("loading data")
