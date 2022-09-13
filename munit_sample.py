@@ -1,5 +1,4 @@
 from torch import nn
-from scipy.stats import entropy
 import torch.nn.functional as F
 import argparse
 from torch.autograd import Variable
