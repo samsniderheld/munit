@@ -15,7 +15,7 @@ def sample_images(args):
     #setup data
     print("loading data")
     data_loader = get_data_loader_folder(args, os.path.join(args.base_data_dir, args.input_data_dir),
-        args.batch_size, True, args.img_width, args.crop_size, args.crop_size)
+        args.batch_size, False, args.img_width, args.crop_size, args.crop_size)
     image_names = ImageFolder(os.path.join(args.base_data_dir, args.input_data_dir), transform=None, return_paths=True)
 
     # load model
@@ -30,6 +30,10 @@ def sample_images(args):
     style_encode = trainer.generator_b.encode  # style encode function
     style_dim = trainer.style_dim
 
+    # Model and output paths
+    args.output_dir = os.path.join(args.output_dir, args.output_images_path, args.output_images_subfolder_path)
+
+    # style
     s = torch.randn(1, style_dim, 1, 1).to(args.device)
     transform = transforms.Compose([transforms.Resize(1024),
                                 transforms.ToTensor(),
