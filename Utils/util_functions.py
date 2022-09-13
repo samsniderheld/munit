@@ -5,6 +5,17 @@ import time
 import re
 from torch.optim import lr_scheduler
 import torch.nn.init as init
+from torchvision.utils import make_grid
+import torch.distributed as dist
+import matplotlib.pyplot as plt
+
+
+def should_distribute(world_size):
+    return dist.is_available() and world_size > 1
+
+
+def is_distributed():
+    return dist.is_available() and dist.is_initialized()
 
 
 def get_model_list(dirname, key):
@@ -45,4 +56,22 @@ class Timer:
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         print(self.msg % (time.time() - self.start_time))
+
+
+def save_sampled_images(image_tensor_fake, path, file_name):
+    '''
+    Function for visualizing images: Given a tensor of imagess, number of images, and
+    size per image, plots and prints the images in an uniform grid.
+    '''
+    # fake
+    image_tensor_fake = (image_tensor_fake + 1) / 2
+    image_fake_unflat = image_tensor_fake.detach().cpu()
+    image_fake_grid = make_grid(image_fake_unflat[:1], nrow=1)
+    
+    fig, ax = plt.subplots( nrows=1, ncols=1 )
+    ax.imshow(image_fake_grid.permute(1, 2, 0).squeeze())
+    plt.axis('off')
+
+    output_path = os.path.join(path,f"{file_name}.jpg") # need to change name
+    fig.savefig(output_path, bbox_inches='tight')
         
